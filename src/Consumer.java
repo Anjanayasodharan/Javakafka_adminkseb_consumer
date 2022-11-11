@@ -1,6 +1,9 @@
+import netscape.javascript.JSObject;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.json.JSONObject;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -22,6 +25,25 @@ public class Consumer {
             ConsumerRecords<String, String> records = consumer.poll(100);
             for (ConsumerRecord<String, String> record : records) {
                 System.out.println(record.value());
+                JSONObject obj=new JSONObject(record.value());
+                String userid = String.valueOf(obj.getInt("userid"));
+                String unit = String.valueOf(obj.getInt("unit"));
+                System.out.println(userid);
+                System.out.println(unit);
+                try {
+                    Class.forName("com.mysql.jdbc.Driver");
+                    Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/admindb", "root", "");
+                    String sql = "INSERT INTO `usages`(`userid`, `unit`, `datetime`) VALUES (?,?,now())";
+                    PreparedStatement stmt=con.prepareStatement((sql));
+                    stmt.setString(1,userid);
+                    stmt.setString(2,unit);
+                    stmt.executeUpdate();
+                    System.out.println("value inserted successfully.........!");
+                }
+                catch (Exception e){
+                    System.out.println((e));
+                }
+
             }
         }
 
